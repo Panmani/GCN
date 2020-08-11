@@ -200,12 +200,13 @@ class GCN(keras.Model):
         self.graph_conv_2 = GraphConv([20, 10])
         self.graph_pool_1 = GraphPool(10)
         self.flatten = layers.Flatten()
-        # self.graph_concat = GraphConcat(graph_size = 15, gender_size = 2, ins_size = 2, age_size = 2)
-        self.graph_concat = GraphConcat(has_weights = False)
-        self.dense_1 = layers.Dense(3, activation='softmax')
+        self.graph_concat = GraphConcat(graph_size = 15, gender_size = 2, ins_size = 2, age_size = 2)
+        # self.graph_concat = GraphConcat(has_weights = False)
+        self.dense_1 = layers.Dense(2, activation='softmax')
 
     def net(self, A_X, gender, ins, age):
         out = self.graph_conv_0(A_X)
+        # print(out)
         out = self.graph_conv_1(out)
         out = self.graph_pool_0(out)
         out = self.graph_conv_2(out)
@@ -224,17 +225,6 @@ class GCN(keras.Model):
         A_X, gender, ins, age = instances
         logits = self.net(A_X, gender, ins, age)
         return logits
-
-
-def convert_to_model_input(inputs):
-    """
-    Split input graph tensor into a tensor for A and another tensor for X
-    """
-    # A = input[0, :, :]
-    # X = input[1, :, :]
-    # X = np.expand_dims(X, axis=-2)
-    A, X = inputs[:, 0, :, :], inputs[:, 1, :, :]
-    return A, X
 
 
 

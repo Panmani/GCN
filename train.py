@@ -2,6 +2,7 @@ import pickle, datetime
 import numpy as np
 import  tensorflow as tf
 from model import *
+from data import *
 import time
 import os, sys
 
@@ -96,7 +97,6 @@ if __name__ == '__main__':
         #       profiler_outdir='logs/gradient_tape/' + current_time + '/graph')
         ckpt.step.assign_add(1)
 
-        val_logits = gcn( [convert_to_model_input(val_graphs), val_genders, val_inss, val_ages, val_Y], training=False )
         val_logits = gcn( [convert_to_model_input(val_graphs), val_genders, val_inss, val_ages, val_Y], training=False )
         mtc_val = keras.metrics.CategoricalAccuracy()
         mtc_val.update_state(val_Y, val_logits)
