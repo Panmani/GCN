@@ -206,6 +206,7 @@ if __name__ == '__main__':
     print("[Test]       Class distribution", np.sum(test_Y, axis = 0))
 
     # ===================== UPSAMPLE =====================
+    print("Upsampling datasets...")
     train_graphs, train_genders, train_inss, train_ages, train_Y = \
         upsample(train_graphs, train_genders, train_inss, train_ages, train_Y)
 

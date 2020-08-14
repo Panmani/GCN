@@ -120,8 +120,8 @@ if __name__ == '__main__':
             best_val_acc = val_acc
 
 
-    print(gcn.summary())
+    # print(gcn.summary())
     training_secs = time.time() - start_time
     print("Trained for {} mins {} secs".format(training_secs // 60, int(training_secs % 60)))
     print('Best validation acc:', best_val_acc)
-    print('Test acc:', test_acc)
+    print('Final test acc:', test_acc)
