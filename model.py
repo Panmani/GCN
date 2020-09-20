@@ -194,20 +194,20 @@ class GCN(keras.Model):
 
     def __init__(self, **kwargs):
         super(GCN, self).__init__(**kwargs)
-        self.graph_conv_0 = GraphConv([200, 25])
-        self.graph_conv_1 = GraphConv([25, 20])
+        self.graph_conv_0 = GraphConv([200, 20])
+        # self.graph_conv_1 = GraphConv([25, 20])
         self.graph_pool_0 = GraphPool(100)
         self.graph_conv_2 = GraphConv([20, 10])
         self.graph_pool_1 = GraphPool(10)
         self.flatten = layers.Flatten()
-        self.graph_concat = GraphConcat(graph_size = 15, gender_size = 2, ins_size = 2, age_size = 2)
-        # self.graph_concat = GraphConcat(has_weights = False)
+        # self.graph_concat = GraphConcat(graph_size = 15, gender_size = 2, ins_size = 2, age_size = 2)
+        self.graph_concat = GraphConcat(has_weights = False)
         self.dense_1 = layers.Dense(2, activation='softmax')
 
     def net(self, A_X, gender, ins, age):
         out = self.graph_conv_0(A_X)
         # print(out)
-        out = self.graph_conv_1(out)
+        # out = self.graph_conv_1(out)
         out = self.graph_pool_0(out)
         out = self.graph_conv_2(out)
         out = self.graph_pool_1(out)

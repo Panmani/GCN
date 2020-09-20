@@ -1,4 +1,11 @@
 # GCN
+We implemented a GCN to predict Autism Spectrum Disorder (ASD) and achieved a ~10% increase when compared with the previous best model.
+
+An example of the effect of Graph Convolutional Layers and Graph Pooling Layers
+![GCN graph](images/GCN_semantics.jpg)
+
+## GCN architecture
+![GCN architecture](images/GCN_matrices.jpg)
 
 ## Dependencies
   * Tensorflow
@@ -19,6 +26,10 @@ in MatLab
 DATA_dir, left_table_file, matrices_dir, pickle_path, upsampled_pickle_path)
 ```
 $ python data.py
+```
+Or generate dataset according to a json file specifying the split (default "split_ids.json"
+```
+$ python data_by_json.py
 ```
 
 3. Train model. The datasets are read from [pickle_path] or [upsampled_pickle_path], as specified in config.py
@@ -46,4 +57,4 @@ tensorboard --logdir logs
 ## Note
 1. The original data file: ABIDE_fc.mat
 2. Model is defined in: model.py
-3. When optimized on test acc, the current model can reach an acc of ~0.6968
+3. recover_ids.py can be used to recover train, val, test split in the form of a json file, "split_ids.json"

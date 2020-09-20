@@ -1,6 +1,7 @@
 import os, sys
 from tqdm import tqdm
 import pickle
+import json
 import pandas as pd
 import numpy as np
 from sklearn.utils import shuffle
@@ -111,8 +112,10 @@ def load_data(data_root_directory=DATA_dir, left_table_file=left_table_file, mat
     inss = []
     genders = []
     ages = []
+    ids = []
     for row in tqdm(range(left_table.shape[0])):
         id = str(left_table.loc[row, 'Id'])
+        ids.append(id)
         # Read left table
         label_1hot = map_to_onehot(left_table.loc[row, 'label'], LABEL_LIST)
         if label_1hot[0] == 1:
@@ -128,6 +131,7 @@ def load_data(data_root_directory=DATA_dir, left_table_file=left_table_file, mat
         A = np.loadtxt(open(os.path.join(data_root_directory, matrix_directory, id + ".csv"), "r"), delimiter=",", skiprows=0)
         matrices.append(preprocess(A, weight_threshold))
 
+    input_ids = np.array(ids)
     input_graphs = np.array(matrices)
     input_genders = np.array(genders)
     input_inss = np.array(inss)
@@ -135,7 +139,11 @@ def load_data(data_root_directory=DATA_dir, left_table_file=left_table_file, mat
     input_ages /= 100.
     input_Y = np.array(labels)
 
-    input_graphs, input_genders, input_inss, input_ages, input_Y = shuffle(input_graphs, input_genders, input_inss, input_ages, input_Y)
+    input_ids, input_graphs, input_genders, input_inss, input_ages, input_Y = shuffle(input_ids, input_graphs, input_genders, input_inss, input_ages, input_Y)
+
+    split_ids = {'train': list(input_ids[:train_size]),
+                 'val': list(input_ids[:val_size]),
+                 'test': list(input_ids[:test_size])}
 
     train_graphs, val_graphs, test_graphs = \
                     input_graphs[:train_size, :, :], \
@@ -166,7 +174,8 @@ def load_data(data_root_directory=DATA_dir, left_table_file=left_table_file, mat
             train_genders, val_genders, test_genders, \
             train_inss, val_inss, test_inss, \
             train_ages, val_ages, test_ages, \
-            train_Y, val_Y, test_Y
+            train_Y, val_Y, test_Y, \
+            split_ids
 
 
 if __name__ == '__main__':
@@ -175,7 +184,8 @@ if __name__ == '__main__':
             train_genders, val_genders, test_genders, \
             train_inss, val_inss, test_inss, \
             train_ages, val_ages, test_ages, \
-            train_Y, val_Y, test_Y = load_data()
+            train_Y, val_Y, test_Y, split_ids = load_data()
+
     A_backbone = get_backbone_graph(train_graphs, weight_threshold)
     train_graphs = set_backbone_graph(train_graphs, A_backbone)
     val_graphs = set_backbone_graph(val_graphs, A_backbone)
@@ -188,6 +198,9 @@ if __name__ == '__main__':
             train_Y, val_Y, test_Y
 
     pickle.dump( datasets, open( pickle_path, "wb" ) )
+    json = json.dumps(split_ids)
+    with open(json_path, "w") as file:
+        file.write(json)
 
     train_graphs, val_graphs, test_graphs, \
             train_genders, val_genders, test_genders, \
@@ -204,9 +217,11 @@ if __name__ == '__main__':
     print("[Training]   Class distribution", np.sum(train_Y, axis = 0))
     print("[Validation] Class distribution", np.sum(val_Y, axis = 0))
     print("[Test]       Class distribution", np.sum(test_Y, axis = 0))
+    # print(train_X)
+    # print(train_X[0].shape)
+    # print(np.argmax(train_Y, axis = 1))
 
     # ===================== UPSAMPLE =====================
-    print("Upsampling datasets...")
     train_graphs, train_genders, train_inss, train_ages, train_Y = \
         upsample(train_graphs, train_genders, train_inss, train_ages, train_Y)
 
@@ -233,3 +248,7 @@ if __name__ == '__main__':
     print("[Training]   Upsampled class distribution", np.sum(train_Y, axis = 0))
     print("[Validation] Upsampled class distribution", np.sum(val_Y, axis = 0))
     print("[Test]       Upsampled class distribution", np.sum(test_Y, axis = 0))
+
+    # pickle.dump( get_backbone_graph(train_graphs), open( backbone_graph_path, "wb" ) )
+    # A_backbone = pickle.load( open( backbone_graph_path, "rb" ) )
+    # convert_to_model_input(train_graphs, A_backbone)
