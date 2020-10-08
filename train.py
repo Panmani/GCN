@@ -84,17 +84,20 @@ if __name__ == '__main__':
     cce = keras.losses.CategoricalCrossentropy()
     for step in range(train_step_num):
         example = next(iterator)
-        # tf.summary.trace_on(graph=True, profiler=True)
+
+        tf.summary.trace_on(graph=True, profiler=True)
 
         logits, loss = train_step(gcn, example, opt, cce)
         mtc = keras.metrics.CategoricalAccuracy()
         mtc.update_state(example['y'], logits)
         acc = mtc.result()
-        # with train_summary_writer.as_default():
-        #   tf.summary.trace_export(
-        #       name="my_func_trace",
-        #       step=0,
-        #       profiler_outdir='logs/gradient_tape/' + current_time + '/graph')
+
+        with train_summary_writer.as_default():
+          tf.summary.trace_export(
+              name="my_func_trace",
+              step=0,
+              profiler_outdir='logs/gradient_tape/' + current_time)
+
         ckpt.step.assign_add(1)
 
         val_logits = gcn( [convert_to_model_input(val_graphs), val_genders, val_inss, val_ages, val_Y], training=False )

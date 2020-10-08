@@ -142,8 +142,8 @@ def load_data(data_root_directory=DATA_dir, left_table_file=left_table_file, mat
     input_ids, input_graphs, input_genders, input_inss, input_ages, input_Y = shuffle(input_ids, input_graphs, input_genders, input_inss, input_ages, input_Y)
 
     split_ids = {'train': list(input_ids[:train_size]),
-                 'val': list(input_ids[:val_size]),
-                 'test': list(input_ids[:test_size])}
+                 'val': list(input_ids[train_size:train_size + val_size]),
+                 'test': list(input_ids[train_size + val_size:])}
 
     train_graphs, val_graphs, test_graphs = \
                     input_graphs[:train_size, :, :], \
