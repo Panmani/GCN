@@ -47,6 +47,7 @@ class GraphConv(layers.Layer):
         })
         return config
 
+
 class SAGPool(layers.Layer):
     """
     SAG Pooling
@@ -85,7 +86,6 @@ class SAGPool(layers.Layer):
         Z_mask = tf.gather_nd(Z, coord)
         Z_mask_tile = tf.tile(Z_mask[:, :, tf.newaxis], [1, 1, X.shape[-1]])
         X_out = tf.math.multiply(Z_mask_tile, X_prime)
-        # print(Z_mask_tile[0, :, :])
 
         A_next = tf.gather_nd(A, coord)
         A_next_T = tf.transpose(A_next, [0, 2, 1])
@@ -101,6 +101,7 @@ class SAGPool(layers.Layer):
             "attention" : self.attention.numpy(),
         })
         return config
+
 
 class HGPool(layers.Layer):
     """
@@ -281,6 +282,7 @@ class GCN(keras.Model):
         A, X, gender, ins, age = instances
         logits = self.net([A, X], gender, ins, age)
         return logits
+
 
 # class TestCallback(Callback):
 #     def __init__(self, test_data):
