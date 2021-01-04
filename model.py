@@ -9,25 +9,27 @@ from config import *
 class GraphConv(layers.Layer):
     """
     Graph convolution layer.
-    kernel_size: (input feature len, output feature len)
+    filters: output feature len
     """
     def __init__(self,
-                kernel_size,
+                filters,
                 **kwargs):
         super(GraphConv, self).__init__(**kwargs)
-        self.kernel_size = kernel_size
+        self.filters = filters
 
     def build(self, input_shape=None):
         super(GraphConv, self).build(input_shape)
-        self.kernels = self.add_weight('kernels', self.kernel_size)
+        self.kernels = self.add_weight('kernels', (input_shape[1][-1], self.filters))
 
     def call(self, inputs, training=None):
         """
-        A shape = (N, n, n)
-        X shape = (N, n, n)
+        A: Adjacency Matrix
+        A: Feature Matrix
+        N = batch size
         n = number of nodes
         """
-        A, X = inputs
+        A = inputs[0]
+        X = inputs[1]
         N, n = A.shape[0], A.shape[1]
         I = tf.linalg.diag(np.array([[1.,] * n] * N, np.float32))
         A_ = A + I
@@ -40,15 +42,69 @@ class GraphConv(layers.Layer):
     def get_config(self):
         config = super(GraphConv, self).get_config()
         config.update({
-            "kernel_size": self.kernel_size,
+            "filters": self.filters,
             "kernels" : self.kernels.numpy(),
         })
         return config
 
-
-class GraphPool(layers.Layer):
+class SAGPool(layers.Layer):
     """
-    Graph Hierarchical Pooling layer.
+    SAG Pooling
+    top_n: the number of nodes kept in the output
+    """
+    def __init__(self,
+                top_n,
+                **kwargs):
+        super(SAGPool, self).__init__(**kwargs)
+        self.top_n = top_n
+
+    def build(self, input_shape=None):
+        super(SAGPool, self).build(input_shape)
+        self.attention = self.add_weight('attention', (input_shape[1][-1],))
+
+    def call(self, inputs, training=None):
+        """
+        A: Adjacency Matrix
+        A: Feature Matrix
+        N = batch size
+        n = number of nodes
+        """
+        A = inputs[0]
+        X = inputs[1]
+        N, n = A.shape[0], A.shape[1]
+        I = tf.linalg.diag(np.array([[1.,] * n] * N, np.float32))
+        A_ = A + I
+        D_12 = tf.linalg.diag(tf.reduce_sum(A_, axis = 1) ** -0.5)
+        DADH = D_12 @ A_ @ D_12 @ X
+        Z = tf.nn.tanh(tf.tensordot(DADH, self.attention, 1)) # shape = (N, n)
+
+        idx = tf.argsort(Z, axis = -1)[:, :self.top_n]
+        ii = tf.tile(tf.range(N)[:, tf.newaxis], (1, self.top_n))
+        coord = tf.stack([ii, idx], axis=-1)
+        X_prime = tf.gather_nd(X, coord) # shape = (N, top_n, param_size)
+        Z_mask = tf.gather_nd(Z, coord)
+        Z_mask_tile = tf.tile(Z_mask[:, :, tf.newaxis], [1, 1, X.shape[-1]])
+        X_out = tf.math.multiply(Z_mask_tile, X_prime)
+        # print(Z_mask_tile[0, :, :])
+
+        A_next = tf.gather_nd(A, coord)
+        A_next_T = tf.transpose(A_next, [0, 2, 1])
+        A_next_T_idx = tf.gather_nd(A_next_T, coord)
+        A_out = tf.transpose(A_next_T_idx, [0, 2, 1])
+
+        return A_out, X_out
+
+    def get_config(self):
+        config = super(GraphConv, self).get_config()
+        config.update({
+            "top_n": self.top_n,
+            "attention" : self.attention.numpy(),
+        })
+        return config
+
+class HGPool(layers.Layer):
+    """
+    Hierarchical Graph Pooling layer.
     """
     def __init__(self,
                 top_n,
@@ -62,7 +118,8 @@ class GraphPool(layers.Layer):
         X shape = (N, n, n) & X = H from previous layer
         n = number of nodes
         """
-        A, X = inputs
+        A = inputs[0]
+        X = inputs[1]
         N, n = A.shape[0], A.shape[1]
         I = tf.linalg.diag(np.array([[1.,] * n] * N, np.float32))
         D_1 = tf.linalg.diag(tf.reduce_sum(A, axis = 1) ** -1)
@@ -194,11 +251,11 @@ class GCN(keras.Model):
 
     def __init__(self, **kwargs):
         super(GCN, self).__init__(**kwargs)
-        self.graph_conv_0 = GraphConv([200, 20])
-        # self.graph_conv_1 = GraphConv([25, 20])
-        self.graph_pool_0 = GraphPool(100)
-        self.graph_conv_2 = GraphConv([20, 10])
-        self.graph_pool_1 = GraphPool(10)
+        self.graph_conv_0 = GraphConv(20)
+        # self.graph_conv_1 = GraphConv(20)
+        # self.graph_pool_0 = SAGPool(100)
+        self.graph_conv_2 = GraphConv(10)
+        self.graph_pool_1 = SAGPool(10)
         self.flatten = layers.Flatten()
         # self.graph_concat = GraphConcat(graph_size = 15, gender_size = 2, ins_size = 2, age_size = 2)
         self.graph_concat = GraphConcat(has_weights = False)
@@ -206,9 +263,8 @@ class GCN(keras.Model):
 
     def net(self, A_X, gender, ins, age):
         out = self.graph_conv_0(A_X)
-        # print(out)
         # out = self.graph_conv_1(out)
-        out = self.graph_pool_0(out)
+        # out = self.graph_pool_0(out)
         out = self.graph_conv_2(out)
         out = self.graph_pool_1(out)
         out = self.flatten(out[1])
@@ -217,16 +273,14 @@ class GCN(keras.Model):
         return out
 
     def call(self, inputs):
-        A_X, gender, ins, age, one_hot = inputs
-        logits = self.net(A_X, gender, ins, age)
+        A, X, gender, ins, age = inputs
+        logits = self.net([A, X], gender, ins, age)
         return logits
 
     def predict(self, instances, **kwargs):
-        A_X, gender, ins, age = instances
-        logits = self.net(A_X, gender, ins, age)
+        A, X, gender, ins, age = instances
+        logits = self.net([A, X], gender, ins, age)
         return logits
-
-
 
 # class TestCallback(Callback):
 #     def __init__(self, test_data):

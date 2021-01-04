@@ -6,9 +6,6 @@ from data import *
 import time
 import os, sys
 
-# tf.compat.v1.disable_eager_execution()
-
-# model_num = 500
 
 def ABIDE_dataset(graphs, genders, inss, ages, labels, batch_size = 25):
     return tf.data.Dataset.from_tensor_slices(dict(graphs=graphs, genders=genders, inss=inss, ages=ages, y=labels)).repeat().batch(batch_size)
@@ -19,7 +16,8 @@ def train_step(model, example, optimizer, cce):
     Trains 'model' on 'example' using 'optimizer'.
     """
     with tf.GradientTape() as tape:
-        data = convert_to_model_input(example['graphs']), example['genders'], example['inss'], example['ages'], example['y']
+        example_A, example_X = convert_to_model_input(example['graphs'])
+        data = example_A, example_X, example['genders'], example['inss'], example['ages']#, example['y']
         logits = model(data)
         loss = cce(example['y'], logits)
     variables = model.trainable_variables
@@ -54,8 +52,9 @@ if __name__ == '__main__':
     print("[Test]       Graph shape, Gender shape, Ins shape, Ages shape, Y shape: \n\t", \
         test_graphs.shape, test_genders.shape, test_inss.shape, test_ages.shape, test_Y.shape)
 
-
     gcn = GCN()
+    gcn.build(input_shape=[(1, 200, 200), (1, 200, 200), (1, 2,), (1, 18,), (1,)])
+
     dataset = ABIDE_dataset(train_graphs, train_genders, train_inss, train_ages, train_Y, batch_size)
     opt = tf.keras.optimizers.Adam(lr=learning_rate)
     iterator = iter(dataset)
@@ -67,9 +66,7 @@ if __name__ == '__main__':
         train_log_dir = 'logs/gradient_tape/' + current_time + '/train'
     else:
         train_log_dir = 'logs/gradient_tape/' + model_idx + '/train'
-    # test_log_dir = 'logs/gradient_tape/' + current_time + '/test'
     train_summary_writer = tf.summary.create_file_writer(train_log_dir)
-    # test_summary_writer = tf.summary.create_file_writer(test_log_dir)
 
     ckpt.restore(manager.latest_checkpoint)
     if manager.latest_checkpoint:
@@ -85,22 +82,23 @@ if __name__ == '__main__':
     for step in range(train_step_num):
         example = next(iterator)
 
-        tf.summary.trace_on(graph=True, profiler=True)
+        # tf.summary.trace_on(graph=True, profiler=True)
 
         logits, loss = train_step(gcn, example, opt, cce)
         mtc = keras.metrics.CategoricalAccuracy()
         mtc.update_state(example['y'], logits)
         acc = mtc.result()
 
-        with train_summary_writer.as_default():
-          tf.summary.trace_export(
-              name="my_func_trace",
-              step=0,
-              profiler_outdir='logs/gradient_tape/' + current_time)
+        # # Tensorboard graph profiler
+        # with train_summary_writer.as_default():
+        #   tf.summary.trace_export(
+        #       name="my_func_trace",
+        #       step=0,
+        #       profiler_outdir='logs/gradient_tape/' + current_time)
 
         ckpt.step.assign_add(1)
 
-        val_logits = gcn( [convert_to_model_input(val_graphs), val_genders, val_inss, val_ages, val_Y], training=False )
+        val_logits = gcn( [convert_to_model_input(val_graphs)[0], convert_to_model_input(val_graphs)[1], val_genders, val_inss, val_ages], training=False )
         mtc_val = keras.metrics.CategoricalAccuracy()
         mtc_val.update_state(val_Y, val_logits)
         val_acc = float(mtc_val.result())
@@ -110,7 +108,7 @@ if __name__ == '__main__':
             tf.summary.scalar('validation accuracy', val_acc, step=step)
 
         if val_acc > best_val_acc:
-            test_logits = gcn( [convert_to_model_input(test_graphs), test_genders, test_inss, test_ages, test_Y], training=False )
+            test_logits = gcn( [convert_to_model_input(test_graphs)[0], convert_to_model_input(test_graphs)[1], test_genders, test_inss, test_ages], training=False )
             mtc_test = keras.metrics.CategoricalAccuracy()
             mtc_test.update_state(test_Y, test_logits)
             test_acc = float(mtc_test.result())
@@ -123,7 +121,6 @@ if __name__ == '__main__':
             best_val_acc = val_acc
 
 
-    print(gcn.summary())
     training_secs = time.time() - start_time
     print("Trained for {} mins {} secs".format(training_secs // 60, int(training_secs % 60)))
     print('Best validation acc:', best_val_acc)

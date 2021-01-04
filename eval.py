@@ -41,6 +41,9 @@ if __name__ == '__main__':
         test_graphs.shape, test_genders.shape, test_inss.shape, test_ages.shape, test_Y.shape)
 
     gcn = GCN()
+    gcn.build(input_shape=[(1, 200, 200), (1, 200, 200), (1, 2,), (1, 18,), (1,)])
+    print(gcn.summary())
+
     dataset = ABIDE_dataset(train_graphs, train_genders, train_inss, train_ages, train_Y, batch_size)
     opt = tf.keras.optimizers.Adam(lr=learning_rate)
     iterator = iter(dataset)
@@ -53,7 +56,7 @@ if __name__ == '__main__':
     else:
         print("Initializing from scratch.")
 
-    pred_y = gcn.predict([convert_to_model_input(test_graphs), test_genders, test_inss, test_ages])
+    pred_y = gcn.predict([convert_to_model_input(test_graphs)[0], convert_to_model_input(test_graphs)[1], test_genders, test_inss, test_ages])
     # print(pred_y)
     pred_label = np.argmax(pred_y, axis = 1)
     print(pred_label)
@@ -61,7 +64,7 @@ if __name__ == '__main__':
 
     print("=====================================================")
     # print(gcn([test_graphs, test_Y]))
-    pred_y = gcn.predict([convert_to_model_input(test_graphs), test_genders, test_inss, test_ages])
+    pred_y = gcn.predict([convert_to_model_input(test_graphs)[0], convert_to_model_input(test_graphs)[1], test_genders, test_inss, test_ages])
     pred_label = np.argmax(pred_y, axis = 1)
     test_label = np.argmax(test_Y, axis = 1)
 
@@ -73,7 +76,8 @@ if __name__ == '__main__':
     print(np.sum(val_Y, axis = 0))
     print(np.sum(test_Y, axis = 0))
 
-    print("Test Acc = {} = {} / {}".format(np.sum(pred_label == test_label) / test_label.shape[0], np.sum(pred_label == test_label), test_label.shape[0]))
+    test_acc = np.sum(pred_label == test_label) / test_label.shape[0]
+    print("Test Acc = {} = {} / {}".format(test_acc, np.sum(pred_label == test_label), test_label.shape[0]))
 
     target_class = 1
     true_positive = np.sum(pred_label[test_label == target_class] == target_class)
@@ -99,6 +103,8 @@ if __name__ == '__main__':
     specificity = balanced_acc * 2 - recall
     print(specificity)
     print('ASD --- Precision = {}  ;  Recall/Sensitivity = {}  ;  F1 score = {}  ;  Specificity = {}  ;  AUC = {}'.format(precision, recall, f1_score, specificity, auc))
+
+    print('Latex table row: {}\% & {}\% & {}\% & {}\% & {}\% & {}\%'.format(round(test_acc * 100., 2), round(precision * 100., 2), round(recall * 100., 2), round(specificity * 100., 2), round(f1_score * 100., 2), round(auc * 100., 2)))
 
     # dot_img_file = 'gcn.png'
     # keras.utils.plot_model(gcn, to_file=dot_img_file, show_shapes=True)

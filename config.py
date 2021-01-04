@@ -14,6 +14,6 @@ val_size = 183
 # epoch_steps = 10
 learning_rate = 1e-2
 batch_size = 64
-train_step_num = 50
+train_step_num = 60
 
-ckpt_dir = './tf_ckpts'
+ckpt_dir = './ckpts'

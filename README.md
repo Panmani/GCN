@@ -15,11 +15,10 @@ An example of the effect of Graph Convolutional Layers and Graph Pooling Layers
   * tqdm
 
 ## Workflow
-1. Convert ABIDE_fc.mat to csv files so that data become easily readable to Python. Run
+1. Convert ABIDE_fc.mat to csv files so that data become easily readable to Python. In MatLab, run
 ```
 converter.m
 ```
-in MatLab
 
 2. Use data.py to generate a pickle file which contains the training, validation, test datasets. This is to make sure the split of datasets is the same across multiple runs of train.py because the data is shuffled before being split.<br>
 (Data paths are specified in config.py: <br>
@@ -27,7 +26,7 @@ DATA_dir, left_table_file, matrices_dir, pickle_path, upsampled_pickle_path)
 ```
 $ python data.py
 ```
-Or generate dataset according to a json file specifying the split (default "split_ids.json"
+OR generate dataset according to a json file specifying the split (default "split_ids.json"
 ```
 $ python data_by_json.py
 ```
