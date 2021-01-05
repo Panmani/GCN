@@ -15,12 +15,14 @@ An example of the effect of Graph Convolutional Layers and Graph Pooling Layers
   * tqdm
 
 ## Workflow
-1. Convert ABIDE_fc.mat to csv files so that data become easily readable to Python. In MatLab, run
+### 1. Preparation
+Convert ABIDE_fc.mat to csv files so that data become easily readable to Python. In MatLab, run
 ```
 converter.m
 ```
 
-2. Use data.py to generate a pickle file which contains the training, validation, test datasets. This is to make sure the split of datasets is the same across multiple runs of train.py because the data is shuffled before being split.<br>
+### 2. Preprocess and create datasets
+Use data.py to generate a pickle file which contains the training, validation, test datasets. This is to make sure the split of datasets is the same across multiple runs of train.py because the data is shuffled before being split.<br>
 (Data paths are specified in config.py: <br>
 DATA_dir, left_table_file, matrices_dir, pickle_path, upsampled_pickle_path)
 ```
@@ -31,24 +33,26 @@ OR generate dataset according to a json file specifying the split (default "spli
 $ python data_by_json.py
 ```
 
-3. Train model. The datasets are read from [pickle_path] or [upsampled_pickle_path], as specified in config.py
+### 3. Train model
+The datasets are read from [pickle_path] or [upsampled_pickle_path], as specified in config.py
 ```
 $ python train.py
 ```
-Or save model to a specified directory under [ckpt_dir]/[model_idx] where [ckpt_dir] is specified in config.py
+OR save model to a specified directory under [ckpt_dir]/[model_idx] where [ckpt_dir] is specified in config.py
 ```
 $ python train.py [model_idx]
 ```
-Or use select_model.sh and run 50 times the above command
+OR use select_model.sh and run 50 times the above command
 ```
 ./select_model.sh
 ```
 
-4. Evaluate model. This evaluates the model saved to [ckpt_dir]
+### 4. Evaluate model
+This evaluates the model saved to [ckpt_dir]
 ```
 $ python eval.py
 ```
-Or use Tensorboard, go to the code root directory and run
+OR use Tensorboard, go to the code root directory and run
 ```
 tensorboard --logdir logs
 ```
