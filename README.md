@@ -16,7 +16,8 @@ An example of the effect of Graph Convolutional Layers and Graph Pooling Layers
 
 ## Workflow
 ### 1. Preparation
-Convert ABIDE_fc.mat to csv files so that data become easily readable to Python. In MatLab, run
+Convert ABIDE_fc.mat to csv files so that data become easily readable to Python. 
+Create a directory named "FC_norm". Then, in MatLab, run
 ```
 converter.m
 ```
