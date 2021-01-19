@@ -1,10 +1,14 @@
 # Graph Convolutional Network (GCN)
 We implemented a GCN to predict Autism Spectrum Disorder (ASD) and achieved a ~10% increase in accuracy when compared with the previous best model.
 
-## GCN architecture
+## GCN C^2P Model
+![GCN architecture](images/gcn_c2p.png)
+
+## The Effect of Graph Convolution & Graph Pooling
+The effect on the adjacency matrix A and the feature matrix H
 ![GCN architecture](images/GCN_matrices.jpg)
 
-An example of the effect of Graph Convolutional Layers and Graph Pooling Layers
+Illustration of the effect on the graph
 ![GCN graph](images/GCN_semantics.jpg)
 
 ## Dependencies
