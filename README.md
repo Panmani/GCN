@@ -1,7 +1,7 @@
 # Graph Convolutional Network (GCN)
 We implemented a GCN to predict Autism Spectrum Disorder (ASD) and achieved a ~10% increase in accuracy when compared with the previous best model.
 
-## GCN C^2P Model
+## GCN C²P Model
 ![GCN architecture](images/gcn_c2p.png)
 
 ## The Effect of Graph Convolution & Graph Pooling
