@@ -52,8 +52,6 @@ And compile the dataset into CV folds and by experiment.
 ```bash
 python prepare_data.py \
     --whole \
-    --male \
-    --threshold \
     --folds 10 \
     cc200
 ```
@@ -63,9 +61,6 @@ python prepare_data.py \
 ```bash
 python nn.py \
     --whole \
-    --male \
-    --threshold \
-    --folds 10 \
     cc200
 ```
 
@@ -73,10 +68,6 @@ python nn.py \
 
 ```bash
 python nn_evaluate.py \
-    --whole \
-    --male \
-    --threshold \
-    --folds 10 \
-    --mean \
-    cc200
+  --whole \
+  cc200
 ```
